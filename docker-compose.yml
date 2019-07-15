@@ -1,0 +1,76 @@
+version: '3.2'
+services:
+  exporter:
+    restart: 'always'
+    ports:
+    - '8080'
+    build: ./exporter
+    image: gpuliyar/prometheus-sql-exporter:latest
+    container_name: prometheus-sql-exporter-container
+    environment:
+    - 'database.url=jdbc:postgresql://postgres-service:5432/postgres'
+    - 'database.username=postgres'
+    - 'database.password=welcome'
+    - 'database.driver.class=org.postgresql.Driver'
+    - 'interval.gauge=15000'
+    - 'interval.counter=15000'
+    - 'interval.histogram=15000'
+    - 'interval.summary=15000'
+    user: exporter
+    networks:
+      infranet:
+        aliases:
+        - prometheus-sql-exporter-service
+    depends_on:
+    - postgres
+  postgres:
+    restart: 'always'
+    ports:
+    - '5432'
+    environment:
+    - 'POSTGRES_PASSWORD=welcome'
+    build: ./psql
+    image: gpuliyar/postgres:latest
+    container_name: postgres-container
+    networks:
+      infranet:
+        aliases:
+        - postgres-service
+  grafana:
+    restart: 'always'
+    ports:
+    - '3000'
+    image: grafana/grafana
+    container_name: grafana-container
+  prometheus:
+    restart: 'always'
+    ports:
+    - '9090'
+    image: prom/prometheus
+    container_name: prometheus-container
+    command:
+    - '--config.file=/prometheus/config/prometheus.yaml'
+    - '--storage.tsdb.path=/data'
+    volumes:
+    - ./prometheus/config:/prometheus/config:ro
+    - ./prometheus/data:/data
+    depends_on:
+    - exporter
+    networks:
+      infranet:
+        aliases:
+        - 'prometheus-service'
+  pyscript:
+    environment:
+    - 'database.user=postgres'
+    - 'database.password=welcome'
+    - 'database.host=postgres-service'
+    - 'database.port=5432'
+    - 'database.name=postgres'
+    build: ./py-script
+    image: gpuliyar/pyscript
+    container_name: pyscript-container
+    depends_on:
+    - postgres
+networks:
+  infranet:

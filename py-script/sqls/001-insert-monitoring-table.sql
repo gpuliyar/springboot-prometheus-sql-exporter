@@ -1,0 +1,1 @@
+INSERT INTO monitoring_table VALUES ('nk', '30', 1)

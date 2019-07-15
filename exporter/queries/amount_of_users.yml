@@ -1,0 +1,10 @@
+name: amount_of_users
+description: Gauge to how many users are in the database
+type: gauge
+labels:
+- app_user
+- age_range
+valueColumn: amount
+sql: >-
+  SELECT app_user, age_range, amount
+  FROM monitoring_table
